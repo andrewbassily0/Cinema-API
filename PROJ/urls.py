@@ -19,5 +19,8 @@ from tickets import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('django/jsonresponsefrommodel/', views.fbv),
+    path('django/jsonresponsefrommodel/', views.fbv_list),
+    path('rest/fbv/<int:pk>', views.fbv_pk),
+    path('rest/Cbv_list/', views.Cbv_list.as_view()),
+    path('rest/Cbv_pk/<int:pk>', views.Cbv_pk.as_view()),
 ]
