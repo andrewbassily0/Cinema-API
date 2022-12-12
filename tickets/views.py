@@ -3,11 +3,13 @@ from django.http import Http404
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from .models import Guest, Movies , Reservation
-from .serializers import GuestSerializers
+from .serializers import GuestSerializers, MoviesSerializers
 from rest_framework.decorators import api_view 
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.decorators import APIView
+from rest_framework import status , mixins, generics , filters , viewsets
+from rest_framework.response import Response 
+from rest_framework.decorators import APIView 
+from django.views.decorators.csrf import csrf_exempt
+
 
 #1  function based view
 
@@ -50,6 +52,15 @@ def fbv_pk (request , pk):
         guest.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+#1.2 fbv movie search (get)
+@api_view (['GET'])
+def movies(request):
+    movie = Movies.objects.filter ( pk = request.data['pk'])
+    serializers = MoviesSerializers(movie, many= True)
+    return Response(serializers.data)
+
+
+
 #2 Class based view // for >> view 
 class Cbv_list (APIView):
     def get(self, request):
@@ -64,7 +75,7 @@ class Cbv_list (APIView):
             return Response(serializer.data, status= status.HTTP_201_CREATED)
          return Response(serializer.data, status= status.HTTP_400_BAD_REQUEST)
 
-#class based view (get , put, delete) // for>> id=pk 
+#2.1class based view (get , put, delete) // for>> id=pk 
 class Cbv_pk(APIView):
     def get_object(self, pk):
         try:
@@ -89,3 +100,73 @@ class Cbv_pk(APIView):
         guest= self.get_object(pk)
         guest.delete
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+#3 mixins (get , post)
+class Mixins_list(mixins.ListModelMixin, mixins.CreateModelMixin,generics.GenericAPIView):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializers
+
+    def get(self , request):
+        return self.list(request)
+    
+    def post(self, request):
+        return self.create(request)
+
+
+#3.1 mixins (get , put , delete)
+class mixins_pk(mixins.RetrieveModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializers
+
+    def get(self, request, pk):
+        return self.retrieve(request , pk)
+
+    def put(self, request, pk):
+        return self.update(request ,pk)
+    
+    def delete(self, request, pk):
+        return self.destroy(request , pk)
+
+
+#4 generic (get , post)
+class Generics_list(generics.ListCreateAPIView):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializers
+
+
+#4.1 generic (get , put , delete)
+class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializers   
+
+#5 view_sets
+class viewsets_guest(viewsets.ModelViewSet , viewsets.MethodMapper):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializers
+
+
+#6 new reservation(POST)
+@api_view (['POST'])
+def new (request):
+    movie = Movies.objects.get( title = request.data['title'] ,  room= request.data['room'])
+    
+    guest = Guest()
+    guest.name = request.data['name'] 
+    guest.mobile = request.data['mobile']
+    guest.age = request.data['age']
+    guest.save()
+
+    reservation=Reservation()
+    reservation.movie = movie
+    reservation.guest = guest
+    reservation.date = request.data['date']
+    reservation.save()
+
+    return Response( status=status.HTTP_201_CREATED)
+
+
+
+
+
+
