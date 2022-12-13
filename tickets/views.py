@@ -9,6 +9,8 @@ from rest_framework import status , mixins, generics , filters , viewsets
 from rest_framework.response import Response 
 from rest_framework.decorators import APIView 
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import   IsAuthenticated
 
 
 #1  function based view
@@ -133,13 +135,15 @@ class mixins_pk(mixins.RetrieveModelMixin, mixins.CreateModelMixin, mixins.Updat
 class Generics_list(generics.ListCreateAPIView):
     queryset = Guest.objects.all()
     serializer_class = GuestSerializers
+    
+    
 
 
 #4.1 generic (get , put , delete)
 class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
     queryset = Guest.objects.all()
-    serializer_class = GuestSerializers   
-
+    serializer_class = GuestSerializers
+    
 #5 view_sets
 class viewsets_guest(viewsets.ModelViewSet , viewsets.MethodMapper):
     queryset = Guest.objects.all()
